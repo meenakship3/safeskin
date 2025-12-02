@@ -1,3 +1,7 @@
 .env
 .flake8
 .venv
+__pycache__/
+*.py[cod]
+*$py.class
+backend/scraper/face_product_urls.txt
