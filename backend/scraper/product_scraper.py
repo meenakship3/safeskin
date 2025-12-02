@@ -1,0 +1,109 @@
+import html
+import re
+from selenium.webdriver.common.by import By
+from selenium.common.exceptions import NoSuchElementException
+from urllib.parse import urlparse, parse_qs
+
+
+class ProductScraper:
+    def __init__(self, driver):
+        self.driver = driver
+
+    def scrape_product(self, url):
+        name = self._extract_product_name()
+        category = self._extract_product_category()
+        image_url = self._extract_image_url()
+        ingredients = self._extract_ingredients()
+        product_id = self.extract_product_id(url)
+
+        return {
+            "name": name,
+            "category": category,
+            "image_url": image_url,
+            "ingredients": ingredients,
+            "product_id": product_id,
+            "url": url,
+        }
+
+    def _extract_product_name(self):
+        try:
+            product_name = self.driver.title
+            cleaned_product_name = " ".join(product_name.split()[1:-1])
+            return cleaned_product_name
+        except Exception:
+            return None
+
+    def _extract_product_category(self):
+        try:
+            product_category = self.driver.find_element(
+                By.CSS_SELECTOR, value=".last-list a"
+            )
+            return product_category.text
+        except NoSuchElementException:
+            return None
+
+    def _extract_product_url(self):
+        product_url = self.driver.current_url
+        return product_url
+
+    def _extract_image_url(self):
+        selectors = [".css-5n0nl4 img", ".css0b4a0jg img"]
+        try:
+            image_url = self.driver.find_element(By.CSS_SELECTOR, value=selectors[0])
+        except NoSuchElementException:
+            image_url = self.driver.find_element(By.CSS_SELECTOR, value=selectors[1])
+        return image_url.get_attribute("src")
+
+    def _extract_ingredients(self):
+        """
+        Extract ingredients list from Nykaa product page.
+        Returns: Clean string of ingredients or None if not found
+        """
+        try:
+            # Get all script tags
+            script_tags = self.driver.find_elements(By.TAG_NAME, "script")
+
+            for script in script_tags:
+                script_content = script.get_attribute("innerHTML")
+                if not script_content:
+                    continue
+
+                # Look for ingredients pattern in the script
+                ingredient_pattern = r'"ingredients":\s*"([^"]*)"'
+                matches = re.findall(ingredient_pattern, script_content, re.IGNORECASE)
+
+                if matches:
+                    raw_ingredients = matches[0]
+
+                    def clean_ingredient_string(raw_string):
+                        cleaned = html.unescape(raw_string)
+                        cleaned = re.sub(r"<[^>]+>", "", cleaned)
+                        cleaned = cleaned.replace("\\n", " ").replace("\\t", " ")
+                        cleaned = re.sub(r"\s+", " ", cleaned)
+                        cleaned = cleaned.strip()
+                        return cleaned
+
+                    cleaned_ingredients = clean_ingredient_string(raw_ingredients)
+                    cleaned_ingredients_list = list(
+                        map(str.strip, cleaned_ingredients.split(","))
+                    )
+
+            return cleaned_ingredients_list
+
+        except Exception as e:
+            print(f"Error extracting ingredients: {e}")
+            return None
+
+    @staticmethod
+    def extract_product_id(url):
+        parsed_url = urlparse(url)
+
+        path_parts = parsed_url.path.split("/")
+        if "p" in path_parts:
+            p_index = path_parts.index("p")
+            if len(path_parts) > p_index + 1:
+                return path_parts[p_index + 1]
+
+        query_params = parse_qs(parsed_url.query)
+        product_id = query_params.get("productId", [None])[0]
+        return product_id
