@@ -4,4 +4,5 @@
 __pycache__/
 *.py[cod]
 *$py.class
-backend/scraper/face_product_urls.txt
+backend/scraper/product_urls.csv
+claude.md
