@@ -87,7 +87,7 @@ class ProductModel:
         if not results and use_fuzzy:
             self.db.cursor.execute(
                 """
-                SELECT 
+                SELECT
                     id, nykaa_product_id, name, category, image_url,
                     similarity(name, %s) as relevance
                 FROM products
@@ -112,7 +112,7 @@ class ProductModel:
         ]
 
 
-class IngredietntModel:
+class IngredientModel:
     """CRUD operations for ingredients table"""
 
     def __init__(self, db):
@@ -190,7 +190,7 @@ class ScrapeLogModel:
 
     def log(self, source, status, product_id=None, error_message=None):
         """ "Log scraping activity"""
-        self.db.cursos.execute(
+        self.db.cursor.execute(
             """
             INSERT INTO scrape_logs (source, product_id, status, error_message)
             VALUES (%s, %s, %s, %s)

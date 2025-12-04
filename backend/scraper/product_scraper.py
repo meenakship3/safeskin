@@ -60,35 +60,32 @@ class ProductScraper:
         Returns: Clean string of ingredients or None if not found
         """
         try:
-            # Get all script tags
-            script_tags = self.driver.find_elements(By.TAG_NAME, "script")
+            # Get page source directly instead of iterating through stale elements
+            page_source = self.driver.page_source
 
-            for script in script_tags:
-                script_content = script.get_attribute("innerHTML")
-                if not script_content:
-                    continue
+            # Look for ingredients pattern in the entire page source
+            ingredient_pattern = r'"ingredients":\s*"([^"]*)"'
+            matches = re.findall(ingredient_pattern, page_source, re.IGNORECASE)
 
-                # Look for ingredients pattern in the script
-                ingredient_pattern = r'"ingredients":\s*"([^"]*)"'
-                matches = re.findall(ingredient_pattern, script_content, re.IGNORECASE)
+            if matches:
+                raw_ingredients = matches[0]
 
-                if matches:
-                    raw_ingredients = matches[0]
+                def clean_ingredient_string(raw_string):
+                    cleaned = html.unescape(raw_string)
+                    cleaned = re.sub(r"<[^>]+>", "", cleaned)
+                    cleaned = cleaned.replace("\\n", " ").replace("\\t", " ")
+                    cleaned = re.sub(r"\s+", " ", cleaned)
+                    cleaned = cleaned.strip()
+                    return cleaned
 
-                    def clean_ingredient_string(raw_string):
-                        cleaned = html.unescape(raw_string)
-                        cleaned = re.sub(r"<[^>]+>", "", cleaned)
-                        cleaned = cleaned.replace("\\n", " ").replace("\\t", " ")
-                        cleaned = re.sub(r"\s+", " ", cleaned)
-                        cleaned = cleaned.strip()
-                        return cleaned
+                cleaned_ingredients = clean_ingredient_string(raw_ingredients)
+                cleaned_ingredients_list = list(
+                    map(str.strip, cleaned_ingredients.split(","))
+                )
 
-                    cleaned_ingredients = clean_ingredient_string(raw_ingredients)
-                    cleaned_ingredients_list = list(
-                        map(str.strip, cleaned_ingredients.split(","))
-                    )
+                return cleaned_ingredients_list
 
-            return cleaned_ingredients_list
+            return None
 
         except Exception as e:
             print(f"Error extracting ingredients: {e}")

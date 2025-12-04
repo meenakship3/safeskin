@@ -6,3 +6,4 @@ __pycache__/
 *$py.class
 backend/scraper/product_urls.csv
 claude.md
+backend/scraper/test.py
