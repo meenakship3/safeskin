@@ -63,41 +63,61 @@ class ProductModel:
 
     def search_by_name(self, query, limit=20, use_fuzzy=True):
         """
-        Smart search with automatic fuzzy fallback
+        Search products by name with fuzzy matching for typos
+
+        Uses combined ILIKE + trigram similarity for best results
 
         :param query: Search term
         :param limit: Max results
         :param use_fuzzy: Enable fuzzy matching for typos (default True)
         """
-        self.db.cursor.execute(
-            """
-            SELECT
-                id, nykaa_product_id, name, category, image_url,
-                ts_rank(to_tsvector('english', name), plainto_tsquery('english', %s)) as relevance
-            FROM products
-            WHERE to_tsvector('english', name) @@ plainto_tsquery('english', %s)
-            ORDER BY relevance DESC, name
-            LIMIT %s
-        """,
-            (query, query, limit),
-        )
-
-        results = self.db.cursor.fetchall()
-
-        if not results and use_fuzzy:
+        if use_fuzzy:
+            # Combined approach: ILIKE for exact substrings + trigram similarity for typos
+            # Lower threshold (0.1) + word_similarity catches more typos like "concelar"
+            self.db.cursor.execute(
+                """
+                SELECT DISTINCT
+                    id, nykaa_product_id, name, category, image_url,
+                    GREATEST(
+                        CASE
+                            WHEN LOWER(name) = LOWER(%s) THEN 1.0
+                            WHEN LOWER(name) LIKE LOWER(%s) THEN 0.9
+                            WHEN LOWER(name) LIKE LOWER(%s) THEN 0.7
+                            ELSE 0.0
+                        END,
+                        similarity(name, %s),
+                        word_similarity(%s, name)
+                    ) as relevance
+                FROM products
+                WHERE
+                    LOWER(name) LIKE LOWER(%s)
+                    OR similarity(name, %s) > 0.1
+                    OR word_similarity(%s, name) > 0.1
+                ORDER BY relevance DESC, name
+                LIMIT %s
+            """,
+                (query, query + '%', '%' + query + '%', query, query, '%' + query + '%', query, query, limit),
+            )
+        else:
+            # Simple ILIKE only
             self.db.cursor.execute(
                 """
                 SELECT
                     id, nykaa_product_id, name, category, image_url,
-                    similarity(name, %s) as relevance
+                    CASE
+                        WHEN LOWER(name) = LOWER(%s) THEN 1.0
+                        WHEN LOWER(name) LIKE LOWER(%s) THEN 0.9
+                        ELSE 0.5
+                    END as relevance
                 FROM products
-                WHERE similarity(name, %s) > 0.3
+                WHERE LOWER(name) LIKE LOWER(%s)
                 ORDER BY relevance DESC, name
                 LIMIT %s
             """,
-                (query, query, limit),
+                (query, query + '%', '%' + query + '%', limit),
             )
-            results = self.db.cursor.fetchall()
+
+        results = self.db.cursor.fetchall()
 
         return [
             {
@@ -184,7 +204,16 @@ class ProductModel:
                 "position": position
             })
 
-        safety_status = 'unsafe' if comedogenic_ingredients else 'safe'
+        # Determine safety status
+        if not all_ingredients:
+            # No ingredients found for this product
+            safety_status = 'unknown'
+        elif comedogenic_ingredients:
+            # Has comedogenic ingredients
+            safety_status = 'unsafe'
+        else:
+            # Has ingredients, none are comedogenic
+            safety_status = 'safe'
 
         return {
             "id": product_row[0],
