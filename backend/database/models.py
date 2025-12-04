@@ -111,6 +111,95 @@ class ProductModel:
             for row in results
         ]
 
+    def get_product_with_safety_analysis(self, product_id):
+        """
+        Get product with comedogenic safety analysis using fuzzy matching.
+
+        Returns product info along with:
+        - safety_status: 'safe' or 'unsafe'
+        - comedogenic_ingredients: list of problematic ingredients
+        - comedogenic_count: number of comedogenic ingredients
+        - all_ingredients: complete list of all ingredients with fuzzy-matched comedogenic status
+        """
+        # Get product basic info
+        self.db.cursor.execute(
+            """
+            SELECT id, nykaa_product_id, name, category, url, image_url
+            FROM products
+            WHERE id = %s
+            """,
+            (product_id,),
+        )
+
+        product_row = self.db.cursor.fetchone()
+
+        if not product_row:
+            return None
+
+        # Get all product ingredients
+        self.db.cursor.execute(
+            """
+            SELECT i.id, i.name, pi.position
+            FROM ingredients i
+            JOIN product_ingredients pi ON i.id = pi.ingredient_id
+            WHERE pi.product_id = %s
+            ORDER BY pi.position NULLS LAST, i.name
+            """,
+            (product_id,),
+        )
+
+        product_ingredients = self.db.cursor.fetchall()
+
+        # Get all comedogenic ingredients from the database
+        self.db.cursor.execute(
+            """
+            SELECT name FROM ingredients WHERE is_comedogenic = TRUE
+            """
+        )
+        comedogenic_list = [row[0].lower() for row in self.db.cursor.fetchall()]
+
+        # Fuzzy match: check if any comedogenic ingredient is contained in product ingredient
+        comedogenic_ingredients = []
+        all_ingredients = []
+
+        for _, ing_name, position in product_ingredients:
+            # Clean the ingredient name for matching (remove brackets, CI codes, etc.)
+            clean_name = ing_name.lower()
+            # Remove common prefixes/suffixes
+            clean_name = clean_name.replace('[+/-', '').replace(']', '').replace('(', '').replace(')', '')
+
+            # Check if any comedogenic ingredient matches
+            is_comedogenic = False
+            for comedogenic_name in comedogenic_list:
+                # Check if the comedogenic ingredient is in the product ingredient name
+                if comedogenic_name in clean_name or clean_name in comedogenic_name:
+                    is_comedogenic = True
+                    if ing_name not in comedogenic_ingredients:
+                        comedogenic_ingredients.append(ing_name)
+                    break
+
+            all_ingredients.append({
+                "name": ing_name,
+                "is_comedogenic": is_comedogenic,
+                "position": position
+            })
+
+        safety_status = 'unsafe' if comedogenic_ingredients else 'safe'
+
+        return {
+            "id": product_row[0],
+            "nykaa_product_id": product_row[1],
+            "name": product_row[2],
+            "category": product_row[3],
+            "url": product_row[4],
+            "image_url": product_row[5],
+            "safety_status": safety_status,
+            "comedogenic_ingredients": comedogenic_ingredients,
+            "comedogenic_count": len(comedogenic_ingredients),
+            "all_ingredients": all_ingredients,
+        }
+
+
 
 class IngredientModel:
     """CRUD operations for ingredients table"""

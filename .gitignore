@@ -7,3 +7,7 @@ __pycache__/
 backend/scraper/product_urls.csv
 claude.md
 backend/scraper/test.py
+todo.md
+backend/database/test_safety_analysis.py
+backend/database/check_specific_ingredient.py
+backend/database/diagnose_ingredients.py

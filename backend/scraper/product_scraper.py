@@ -54,6 +54,24 @@ class ProductScraper:
             image_url = self.driver.find_element(By.CSS_SELECTOR, value=selectors[1])
         return image_url.get_attribute("src")
 
+    @staticmethod
+    def _clean_ingredient_name(ingredient):
+        """
+        Clean ingredient name by removing CI codes and other suffixes.
+
+        Examples:
+        - "Bismuth Oxychloride (Ci 77163)" -> "Bismuth Oxychloride"
+        - "Iron Oxides (Ci 77491, Ci 77492)" -> "Iron Oxides"
+        - "Red 7 Lake (Ci 15850)" -> "Red 7 Lake"
+        """
+        # Remove CI codes in parentheses: (Ci 12345) or (CI 12345)
+        cleaned = re.sub(r'\s*\([Cc][Ii]\s+\d+(?:,\s*[Cc][Ii]\s+\d+)*\)', '', ingredient)
+
+        # Remove trailing/leading whitespace
+        cleaned = cleaned.strip()
+
+        return cleaned
+
     def _extract_ingredients(self):
         """
         Extract ingredients list from Nykaa product page.
@@ -82,6 +100,11 @@ class ProductScraper:
                 cleaned_ingredients_list = list(
                     map(str.strip, cleaned_ingredients.split(","))
                 )
+
+                # Clean each ingredient to remove CI codes and other suffixes
+                cleaned_ingredients_list = [
+                    self._clean_ingredient_name(ing) for ing in cleaned_ingredients_list
+                ]
 
                 return cleaned_ingredients_list
 
