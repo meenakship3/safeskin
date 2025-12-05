@@ -11,6 +11,8 @@ from database.models import Database, ProductModel
 
 load_dotenv()
 
+ip_address = os.getenv("HOTSPOT_IP_ADDRESS")
+
 app = FastAPI(
     title="Safeskin API",
     description="API for checking comedogenicity of cosmetic products",
@@ -19,7 +21,10 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=[
+        "http://localhost:3000",  # Local development
+        f"http://{ip_address}:3000",  # Mobile testing
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
