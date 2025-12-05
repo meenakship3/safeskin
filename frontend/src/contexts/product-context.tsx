@@ -46,6 +46,7 @@ type Ctx = {
   productError: string | null
   searchProducts: (query: string) => Promise<void>
   getProductById: (id: number) => Promise<void>
+  setScrapedProduct: (product: ProductDetail) => void
   clearSearch: () => void
 }
 
@@ -116,6 +117,12 @@ export function ProductProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  function setScrapedProduct(product: ProductDetail) {
+    setCurrentProduct(product)
+    setProductError(null)
+    setIsLoadingProduct(false)
+  }
+
   function clearSearch() {
     setSearchResults([])
     setSearchQuery("")
@@ -134,6 +141,7 @@ export function ProductProvider({ children }: { children: React.ReactNode }) {
       productError,
       searchProducts,
       getProductById,
+      setScrapedProduct,
       clearSearch,
     }),
     [searchQuery, searchResults, isSearching, searchError, currentProduct, isLoadingProduct, productError]

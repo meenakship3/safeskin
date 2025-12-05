@@ -1,6 +1,33 @@
 from selenium import webdriver
 
 
+# def setup_driver():
+#     """Create and configure Chrome WebDriver for production"""
+#     chrome_options = webdriver.ChromeOptions()
+
+#     # Enable headless mode (no visible browser)
+#     chrome_options.add_argument("--headless=new")
+
+#     # Required for Docker/Linux servers
+#     chrome_options.add_argument("--no-sandbox")
+#     chrome_options.add_argument("--disable-dev-shm-usage")
+
+#     # Optional: Disable GPU for better compatibility
+#     chrome_options.add_argument("--disable-gpu")
+
+#     # Basic anti-detection (helps avoid blocking)
+#     chrome_options.add_argument("--disable-blink-features=AutomationControlled")
+#     chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
+#     chrome_options.add_experimental_option("useAutomationExtension", False)
+
+#     driver = webdriver.Chrome(options=chrome_options)
+
+#     # Hide webdriver property
+#     driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+
+#     return driver
+
+
 def setup_driver():
     """Create and configure Chrome WebDriver"""
     chrome_options = webdriver.ChromeOptions()

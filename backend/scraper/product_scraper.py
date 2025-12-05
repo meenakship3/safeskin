@@ -65,7 +65,9 @@ class ProductScraper:
         - "Red 7 Lake (Ci 15850)" -> "Red 7 Lake"
         """
         # Remove CI codes in parentheses: (Ci 12345) or (CI 12345)
-        cleaned = re.sub(r'\s*\([Cc][Ii]\s+\d+(?:,\s*[Cc][Ii]\s+\d+)*\)', '', ingredient)
+        cleaned = re.sub(
+            r"\s*\([Cc][Ii]\s+\d+(?:,\s*[Cc][Ii]\s+\d+)*\)", "", ingredient
+        )
 
         # Remove trailing/leading whitespace
         cleaned = cleaned.strip()

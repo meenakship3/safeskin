@@ -5,12 +5,14 @@ import { useRouter } from "next/navigation"
 import Header from "@/components/header"
 import Footer from "@/components/footer"
 import { Link as LinkIcon, Loader2 } from "lucide-react"
+import { useProduct } from "@/contexts/product-context"
 
 export default function HomePage() {
   const [nykaaUrl, setNykaaUrl] = useState("")
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
+  const { setScrapedProduct } = useProduct()
 
   async function handleUrlSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -20,35 +22,39 @@ export default function HomePage() {
     setError(null)
 
     try {
-      // Extract product ID from Nykaa URL
-      // Example URL: https://www.nykaa.com/product-name/p/12345
+      // Validate Nykaa URL format
       const match = nykaaUrl.match(/\/p\/(\d+)/)
 
       if (!match) {
         throw new Error("Invalid Nykaa URL. Please make sure it's a product link.")
       }
 
-      const nykaaProductId = match[1]
-
-      // Search for the product by nykaa_product_id
+      // Scrape the product directly and get instant results
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/products/search?q=${nykaaProductId}&limit=1`
+        `${process.env.NEXT_PUBLIC_API_URL}/api/products/scrape`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ url: nykaaUrl }),
+        }
       )
 
       if (!response.ok) {
-        throw new Error("Failed to search for product")
+        throw new Error("Failed to analyze product. Please try again.")
       }
 
-      const results = await response.json()
+      const productData = await response.json()
 
-      if (results.length === 0) {
-        setError("Product not found in our database. Try searching by product name instead.")
-        setIsProcessing(false)
-        return
-      }
+      // Add a temporary id of 0 to indicate it's a scraped product
+      const productWithId = { ...productData, id: 0 }
 
-      // Redirect to product page
-      router.push(`/product/${results[0].id}`)
+      // Set the scraped product in context
+      setScrapedProduct(productWithId)
+
+      // Navigate to product page with special id
+      router.push("/product/scraped")
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to process URL")
       setIsProcessing(false)
