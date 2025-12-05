@@ -50,9 +50,10 @@ export default function SearchBar() {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    // If there are results, navigate to the first one
-    if (searchResults.length > 0) {
-      handleProductClick(searchResults[0].id)
+    // Navigate to search results page if query is valid
+    if (query.length >= 2) {
+      setShowResults(false)
+      router.push(`/search?q=${encodeURIComponent(query)}`)
     }
   }
 
@@ -101,35 +102,47 @@ export default function SearchBar() {
                   No products found for "{query}"
                 </div>
               ) : (
-                <ul className="divide-y divide-amber-100">
-                  {searchResults.map((product) => (
-                    <li key={product.id}>
-                      <button
-                        type="button"
-                        onClick={() => handleProductClick(product.id)}
-                        className="w-full px-4 py-3 text-left transition hover:bg-amber-50 active:bg-amber-100"
-                      >
-                        <div className="flex items-start gap-3">
-                          {product.image_url && (
-                            <img
-                              src={product.image_url}
-                              alt={product.name}
-                              className="h-12 w-12 flex-shrink-0 rounded object-cover"
-                            />
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-[#333] truncate">
-                              {product.name}
-                            </p>
-                            <p className="text-xs text-[#888] mt-0.5">
-                              {product.category}
-                            </p>
+                <>
+                  <ul className="divide-y divide-amber-100">
+                    {searchResults.slice(0, 5).map((product) => (
+                      <li key={product.id}>
+                        <button
+                          type="button"
+                          onClick={() => handleProductClick(product.id)}
+                          className="w-full px-4 py-3 text-left transition hover:bg-amber-50 active:bg-amber-100"
+                        >
+                          <div className="flex items-start gap-3">
+                            {product.image_url && (
+                              <img
+                                src={product.image_url}
+                                alt={product.name}
+                                className="h-12 w-12 flex-shrink-0 rounded object-cover"
+                              />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-[#333] truncate">
+                                {product.name}
+                              </p>
+                              <p className="text-xs text-[#888] mt-0.5">
+                                {product.category}
+                              </p>
+                            </div>
                           </div>
-                        </div>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                  {searchResults.length > 0 && (
+                    <div className="border-t border-amber-100 p-3">
+                      <button
+                        type="submit"
+                        className="w-full rounded-lg bg-amber-50 px-4 py-2 text-center text-sm font-medium text-amber-800 transition hover:bg-amber-100"
+                      >
+                        View All Results ({searchResults.length}+)
                       </button>
-                    </li>
-                  ))}
-                </ul>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}

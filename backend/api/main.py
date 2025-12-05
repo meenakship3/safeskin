@@ -66,6 +66,16 @@ class ProductSearchResult(BaseModel):
     relevance: float
 
 
+class PaginatedSearchResponse(BaseModel):
+    """Response model for paginated search results"""
+
+    results: List[ProductSearchResult]
+    total_count: int
+    page: int
+    page_size: int
+    total_pages: int
+
+
 class ProductDetailResponse(BaseModel):
     """Response model for detailed product information"""
 
@@ -136,7 +146,7 @@ async def search_products(
     q: str = Query(..., min_length=2, description="Search query"),
     limit: int = Query(20, ge=1, le=100, description="Max results"),
 ):
-    """Search for products by name"""
+    """Search for products by name (dropdown version - no pagination)"""
     db = get_db_connection()
     product_model = ProductModel(db)
 
@@ -144,6 +154,60 @@ async def search_products(
         results = product_model.search_by_name(q, limit=limit, use_fuzzy=True)
         db.close()
         return results
+    except Exception as e:
+        db.close()
+        raise HTTPException(status_code=500, detail=f"Search failed: {str(e)}")
+
+
+@app.get("/api/products/search/paginated", response_model=PaginatedSearchResponse)
+async def search_products_paginated(
+    q: str = Query(..., min_length=2, description="Search query"),
+    page: int = Query(1, ge=1, description="Page number"),
+    page_size: int = Query(20, ge=1, le=100, description="Results per page"),
+):
+    """Search for products by name with pagination"""
+    db = get_db_connection()
+    product_model = ProductModel(db)
+
+    try:
+        # Calculate offset
+        offset = (page - 1) * page_size
+
+        # Get total count matching the same fuzzy search logic
+        db.cursor.execute(
+            """
+            SELECT COUNT(DISTINCT id)
+            FROM products
+            WHERE
+                LOWER(name) LIKE LOWER(%s)
+                OR similarity(name, %s) > 0.1
+                OR word_similarity(%s, name) > 0.1
+            """,
+            (f"%{q}%", q, q)
+        )
+        total_count = db.cursor.fetchone()[0]
+
+        # Get paginated results
+        results = product_model.search_by_name(q, limit=page_size, offset=offset, use_fuzzy=True)
+
+        # Calculate total pages
+        total_pages = (total_count + page_size - 1) // page_size
+
+        # Debug logging
+        print(f"Search query: '{q}', page: {page}, offset: {offset}")
+        print(f"Total count: {total_count}, results returned: {len(results)}")
+        if results:
+            print(f"First result ID: {results[0]['id']}, Last result ID: {results[-1]['id']}")
+
+        db.close()
+
+        return {
+            "results": results,
+            "total_count": total_count,
+            "page": page,
+            "page_size": page_size,
+            "total_pages": total_pages
+        }
     except Exception as e:
         db.close()
         raise HTTPException(status_code=500, detail=f"Search failed: {str(e)}")

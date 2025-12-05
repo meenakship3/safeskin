@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { createContext, useContext, useMemo, useState } from "react"
+import { createContext, useContext, useMemo, useState, useCallback, useRef } from "react"
 
 // Backend API URL from environment variables
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
@@ -62,7 +62,10 @@ export function ProductProvider({ children }: { children: React.ReactNode }) {
   const [isLoadingProduct, setIsLoadingProduct] = useState(false)
   const [productError, setProductError] = useState<string | null>(null)
 
-  async function searchProducts(query: string) {
+  // Track the last fetched product ID to prevent duplicate requests
+  const lastFetchedIdRef = useRef<number | null>(null)
+
+  const searchProducts = useCallback(async (query: string) => {
     if (!query.trim() || query.length < 2) {
       setSearchResults([])
       return
@@ -90,9 +93,15 @@ export function ProductProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsSearching(false)
     }
-  }
+  }, [])
 
-  async function getProductById(id: number) {
+  const getProductById = useCallback(async (id: number) => {
+    // Prevent duplicate requests for the same product
+    if (lastFetchedIdRef.current === id && currentProduct?.id === id) {
+      return
+    }
+
+    lastFetchedIdRef.current = id
     setIsLoadingProduct(true)
     setProductError(null)
     setCurrentProduct(null)
@@ -115,7 +124,7 @@ export function ProductProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoadingProduct(false)
     }
-  }
+  }, [currentProduct?.id])
 
   function setScrapedProduct(product: ProductDetail) {
     setCurrentProduct(product)

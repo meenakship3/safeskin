@@ -61,7 +61,7 @@ class ProductModel:
             }
         return None
 
-    def search_by_name(self, query, limit=20, use_fuzzy=True):
+    def search_by_name(self, query, limit=20, offset=0, use_fuzzy=True):
         """
         Search products by name with fuzzy matching for typos
 
@@ -69,6 +69,7 @@ class ProductModel:
 
         :param query: Search term
         :param limit: Max results
+        :param offset: Number of results to skip (for pagination)
         :param use_fuzzy: Enable fuzzy matching for typos (default True)
         """
         if use_fuzzy:
@@ -94,9 +95,9 @@ class ProductModel:
                     OR similarity(name, %s) > 0.1
                     OR word_similarity(%s, name) > 0.1
                 ORDER BY relevance DESC, name
-                LIMIT %s
+                LIMIT %s OFFSET %s
             """,
-                (query, query + '%', '%' + query + '%', query, query, '%' + query + '%', query, query, limit),
+                (query, query + '%', '%' + query + '%', query, query, '%' + query + '%', query, query, limit, offset),
             )
         else:
             # Simple ILIKE only
@@ -112,9 +113,9 @@ class ProductModel:
                 FROM products
                 WHERE LOWER(name) LIKE LOWER(%s)
                 ORDER BY relevance DESC, name
-                LIMIT %s
+                LIMIT %s OFFSET %s
             """,
-                (query, query + '%', '%' + query + '%', limit),
+                (query, query + '%', '%' + query + '%', limit, offset),
             )
 
         results = self.db.cursor.fetchall()
