@@ -2,40 +2,36 @@
 
 A full-stack web application that analyzes skincare and cosmetic products to determine if they're safe for acne-prone skin by identifying comedogenic (pore-clogging) ingredients.
 
----
 
 ## Features
 
-**Fuzzy Search with pg_trgm** - PostgreSQL trigram-based search handles typos and partial matches for intuitive product discovery
+- **Fuzzy Search with pg_trgm** - PostgreSQL trigram-based search handles typos and partial matches for intuitive product discovery
+- **Safety Analysis Engine** - Analyzes ingredients against 300+ known comedogenic substances with detailed explanations of problematic ingredients
+- **Real-time Web Scraping** - Selenium-based scraper extracts product data with manual link fallback when products aren't found in database
+- **Intelligent Caching** - PostgreSQL-based caching layer prevents redundant scraping and speeds up repeat queries
+- **RESTful API** - 5 FastAPI endpoints with automatic OpenAPI documentation, Pydantic validation, and CORS configuration
+- **Paginated Search Results** - Server-side pagination with relevance scoring for efficient browsing of products
+- **Dynamic Product Pages** - React 19 server components render ingredient breakdowns with visual safety indicators
 
-**Safety Analysis Engine** - Analyzes ingredients against 300+ known comedogenic substances with detailed explanations of problematic ingredients
-
-**Real-time Web Scraping** - Selenium-based scraper extracts product data with manual link fallback when products aren't found in database
-
-**Intelligent Caching** - PostgreSQL-based caching layer prevents redundant scraping and speeds up repeat queries
-
-**RESTful API** - 5 FastAPI endpoints with automatic OpenAPI documentation, Pydantic validation, and CORS configuration
-
-**Paginated Search Results** - Server-side pagination with relevance scoring for efficient browsing of products
-
-**Dynamic Product Pages** - React 19 server components render ingredient breakdowns with visual safety indicators
-
----
 
 ## Tech Stack
 
-**Next.js 15** - App Router with server actions
-**React 19** - Modern UI development with TypeScript
-**Tailwind CSS** - Utility-first styling framework
-**FastAPI** - High-performance Python API framework with 5 endpoints
-**PostgreSQL 14+** - Relational database with pg_trgm extension
-**Selenium WebDriver** - Automated browser for web scraping
-**psycopg2** - PostgreSQL adapter for Python
-**Pydantic** - Data validation and settings management
+- **Next.js 15** - App Router with server actions
+- **React 19** - Modern UI development with TypeScript
+- **Tailwind CSS** - Utility-first styling framework
+- **FastAPI** - High-performance Python API framework with 5 endpoints
+- **PostgreSQL 14+** - Relational database with pg_trgm extension
+- **Selenium WebDriver** - Automated browser for web scraping
+- **psycopg2** - PostgreSQL adapter for Python
+- **Pydantic** - Data validation and settings management
 
----
 
 ## Screenshots
+<div><img src="https://github.com/user-attachments/assets/4bdea04b-a18c-467c-87a6-d030bcae2537" width=20% height=10%></div>
+<div><img src="https://github.com/user-attachments/assets/46d466eb-cf52-478d-8959-7dde3bc5a329" width=20%></div>
+<img src="https://github.com/user-attachments/assets/3a55ecca-f54a-4ce7-894f-008a06b7288c" width=20%>
+
+
 
 ## Setup & Installation
 
@@ -83,9 +79,8 @@ npm install
 npm run dev
 ```
 
-Visit [http://localhost:3000](http://localhost:3000)
+- The project will run on [http://localhost:3000](http://localhost:3000)
 
----
 
 ## License
 
