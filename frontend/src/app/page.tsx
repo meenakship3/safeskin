@@ -5,14 +5,11 @@ import { useRouter } from "next/navigation"
 import Header from "@/components/header"
 import Footer from "@/components/footer"
 import { Link as LinkIcon, Loader2 } from "lucide-react"
-import { useProduct } from "@/contexts/product-context"
-
 export default function HomePage() {
   const [nykaaUrl, setNykaaUrl] = useState("")
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
-  const { setScrapedProduct } = useProduct()
 
   async function handleUrlSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -47,14 +44,8 @@ export default function HomePage() {
 
       const productData = await response.json()
 
-      // Add a temporary id of 0 to indicate it's a scraped product
-      const productWithId = { ...productData, id: 0 }
-
-      // Set the scraped product in context
-      setScrapedProduct(productWithId)
-
-      // Navigate to product page with special id
-      router.push("/product/scraped")
+      // Navigate to product page using the database ID from the response
+      router.push(`/product/${productData.id}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to process URL")
       setIsProcessing(false)

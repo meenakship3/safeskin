@@ -14,7 +14,7 @@ from scraper.config import setup_driver
 
 load_dotenv()
 
-ip_address = os.getenv("HOTSPOT_IP_ADDRESS")
+ip_address = os.getenv("HOME_IP_ADDRESS")
 
 app = FastAPI(
     title="Safeskin API",
@@ -107,6 +107,7 @@ class ScrapeRequest(BaseModel):
 class ScrapeResponse(BaseModel):
     """Response model for scraped product with safety analysis"""
 
+    id: int
     nykaa_product_id: str
     name: str
     category: str
@@ -183,12 +184,14 @@ async def search_products_paginated(
                 OR similarity(name, %s) > 0.1
                 OR word_similarity(%s, name) > 0.1
             """,
-            (f"%{q}%", q, q)
+            (f"%{q}%", q, q),
         )
         total_count = db.cursor.fetchone()[0]
 
         # Get paginated results
-        results = product_model.search_by_name(q, limit=page_size, offset=offset, use_fuzzy=True)
+        results = product_model.search_by_name(
+            q, limit=page_size, offset=offset, use_fuzzy=True
+        )
 
         # Calculate total pages
         total_pages = (total_count + page_size - 1) // page_size
@@ -197,7 +200,9 @@ async def search_products_paginated(
         print(f"Search query: '{q}', page: {page}, offset: {offset}")
         print(f"Total count: {total_count}, results returned: {len(results)}")
         if results:
-            print(f"First result ID: {results[0]['id']}, Last result ID: {results[-1]['id']}")
+            print(
+                f"First result ID: {results[0]['id']}, Last result ID: {results[-1]['id']}"
+            )
 
         db.close()
 
@@ -206,7 +211,7 @@ async def search_products_paginated(
             "total_count": total_count,
             "page": page,
             "page_size": page_size,
-            "total_pages": total_pages
+            "total_pages": total_pages,
         }
     except Exception as e:
         db.close()
@@ -246,7 +251,7 @@ async def scrape_product(request: ScrapeRequest):
 
     try:
         # Extract product ID from URL
-        match = re.search(r'/p/(\d+)', request.url)
+        match = re.search(r"/p/(\d+)", request.url)
         if not match:
             db.close()
             raise HTTPException(status_code=400, detail="Invalid Nykaa URL")
@@ -255,14 +260,15 @@ async def scrape_product(request: ScrapeRequest):
 
         # CHECK CACHE FIRST: Query database for existing product by nykaa_product_id
         db.cursor.execute(
-            "SELECT id FROM products WHERE nykaa_product_id = %s",
-            (nykaa_product_id,)
+            "SELECT id FROM products WHERE nykaa_product_id = %s", (nykaa_product_id,)
         )
         cached_row = db.cursor.fetchone()
 
         if cached_row:
             # Found in cache - return analysis from database
-            cached_product = product_model.get_product_with_safety_analysis(cached_row[0])
+            cached_product = product_model.get_product_with_safety_analysis(
+                cached_row[0]
+            )
             db.close()
             return cached_product
 
@@ -275,6 +281,7 @@ async def scrape_product(request: ScrapeRequest):
 
         # Add a small delay to ensure page JavaScript has loaded
         import time
+
         time.sleep(3)
 
         scraped_data = scraper.scrape_product(request.url)
@@ -289,9 +296,7 @@ async def scrape_product(request: ScrapeRequest):
             )
 
         # Get all comedogenic ingredients from database
-        db.cursor.execute(
-            "SELECT name FROM ingredients WHERE is_comedogenic = TRUE"
-        )
+        db.cursor.execute("SELECT name FROM ingredients WHERE is_comedogenic = TRUE")
         comedogenic_list = [row[0].lower() for row in db.cursor.fetchall()]
 
         # Analyze scraped ingredients
@@ -318,7 +323,11 @@ async def scrape_product(request: ScrapeRequest):
                     break
 
             all_ingredients.append(
-                {"name": ing_name, "is_comedogenic": is_comedogenic, "position": position}
+                {
+                    "name": ing_name,
+                    "is_comedogenic": is_comedogenic,
+                    "position": position,
+                }
             )
 
         # Determine safety status
@@ -339,12 +348,14 @@ async def scrape_product(request: ScrapeRequest):
             scraped_data["name"],
             scraped_data["category"],
             request.url,
-            scraped_data["image_url"]
+            scraped_data["image_url"],
         )
 
         # Create ingredient records and link to product
         if scraped_data["ingredients"]:
-            for position, ingredient_name in enumerate(scraped_data["ingredients"], start=1):
+            for position, ingredient_name in enumerate(
+                scraped_data["ingredients"], start=1
+            ):
                 ingredient_id = ingredient_model.create_or_get(ingredient_name)
                 product_ingredient_model.link(product_id, ingredient_id, position)
 
@@ -356,6 +367,7 @@ async def scrape_product(request: ScrapeRequest):
         db.close()
 
         return {
+            "id": product_id,
             "nykaa_product_id": scraped_data["product_id"],
             "name": scraped_data["name"],
             "category": scraped_data["category"],
@@ -373,9 +385,12 @@ async def scrape_product(request: ScrapeRequest):
         raise
     except Exception as e:
         import traceback
+
         print(f"Error in scrape_product: {str(e)}")
         print(traceback.format_exc())
         if driver:
             driver.quit()
         db.close()
-        raise HTTPException(status_code=500, detail=f"Failed to scrape product: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to scrape product: {str(e)}"
+        )

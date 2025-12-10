@@ -1,14 +1,60 @@
+# Python
 .env
 .flake8
 .venv
 __pycache__/
 *.py[cod]
 *$py.class
+
+# Backend scraper outputs & test files
 backend/scraper/product_urls.csv
-claude.md
 backend/scraper/test.py
-todo.md
 backend/database/test_safety_analysis.py
 backend/database/check_specific_ingredient.py
 backend/database/diagnose_ingredients.py
+
+# Personal notes
+claude.md
+todo.md
 START_MOBILE_TESTING.md
+badges.md
+
+# Frontend - Node.js dependencies
+frontend/node_modules
+frontend/.pnp
+frontend/.pnp.*
+frontend/.yarn/*
+!frontend/.yarn/patches
+!frontend/.yarn/plugins
+!frontend/.yarn/releases
+!frontend/.yarn/versions
+
+# Frontend - Testing
+frontend/coverage
+
+# Frontend - Next.js
+frontend/.next/
+frontend/out/
+
+# Frontend - Production
+frontend/build
+
+# Frontend - Misc
+.DS_Store
+*.pem
+
+# Frontend - Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Frontend - Environment files
+frontend/.env*
+
+# Frontend - Vercel
+frontend/.vercel
+
+# Frontend - TypeScript
+frontend/*.tsbuildinfo
+frontend/next-env.d.ts

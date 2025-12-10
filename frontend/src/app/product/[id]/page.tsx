@@ -12,7 +12,7 @@ export default function ProductResultPage() {
   const { getProductById, currentProduct, isLoadingProduct, productError } = useProduct()
 
   useEffect(() => {
-    if (params?.id && params.id !== "scraped") {
+    if (params?.id) {
       const productId = parseInt(params.id, 10)
       if (!isNaN(productId)) {
         getProductById(productId)

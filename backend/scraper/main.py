@@ -153,7 +153,7 @@ def main():
 
     urls = collector.collect_all_product_urls(
         "https://www.nykaa.com/makeup/face/c/13?ptype=lst&id=13&root=nav_2&dir=desc&order=popularity",
-        max_pages=2,
+        max_pages=27,
     )
 
     print(f"Total URLs collected: {len(urls)}")

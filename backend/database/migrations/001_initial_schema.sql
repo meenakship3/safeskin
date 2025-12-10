@@ -18,6 +18,9 @@ CREATE INDEX idx_products_name ON products USING GIN (to_tsvector('english', nam
 CREATE INDEX idx_products_nykaa_id ON products (nykaa_product_id);
 CREATE INDEX idx_products_category ON products (category);
 
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+CREATE INDEX idx_products_name_trgm ON products USING GIN (name gin_trgm_ops);
+
 -- Create ingredients table
 CREATE TABLE ingredients (
     id SERIAL PRIMARY KEY,
@@ -46,7 +49,7 @@ CREATE TABLE product_ingredients (
 CREATE INDEX idx_product_ingredients_product ON product_ingredients (product_id);
 CREATE INDEX idx_product_ingredients_ingredient ON product_ingredients (ingredient_id);
 
--- Create scrape_logs table
+-- Create scrape_logs table (will be implemented later)
 CREATE TABLE scrape_logs (
     id SERIAL PRIMARY KEY,
     source VARCHAR(50) NOT NULL,

@@ -97,7 +97,18 @@ class ProductModel:
                 ORDER BY relevance DESC, name
                 LIMIT %s OFFSET %s
             """,
-                (query, query + '%', '%' + query + '%', query, query, '%' + query + '%', query, query, limit, offset),
+                (
+                    query,
+                    query + "%",
+                    "%" + query + "%",
+                    query,
+                    query,
+                    "%" + query + "%",
+                    query,
+                    query,
+                    limit,
+                    offset,
+                ),
             )
         else:
             # Simple ILIKE only
@@ -115,7 +126,7 @@ class ProductModel:
                 ORDER BY relevance DESC, name
                 LIMIT %s OFFSET %s
             """,
-                (query, query + '%', '%' + query + '%', limit, offset),
+                (query, query + "%", "%" + query + "%", limit, offset),
             )
 
         results = self.db.cursor.fetchall()
@@ -187,7 +198,12 @@ class ProductModel:
             # Clean the ingredient name for matching (remove brackets, CI codes, etc.)
             clean_name = ing_name.lower()
             # Remove common prefixes/suffixes
-            clean_name = clean_name.replace('[+/-', '').replace(']', '').replace('(', '').replace(')', '')
+            clean_name = (
+                clean_name.replace("[+/-", "")
+                .replace("]", "")
+                .replace("(", "")
+                .replace(")", "")
+            )
 
             # Check if any comedogenic ingredient matches
             is_comedogenic = False
@@ -199,22 +215,24 @@ class ProductModel:
                         comedogenic_ingredients.append(ing_name)
                     break
 
-            all_ingredients.append({
-                "name": ing_name,
-                "is_comedogenic": is_comedogenic,
-                "position": position
-            })
+            all_ingredients.append(
+                {
+                    "name": ing_name,
+                    "is_comedogenic": is_comedogenic,
+                    "position": position,
+                }
+            )
 
         # Determine safety status
         if not all_ingredients:
             # No ingredients found for this product
-            safety_status = 'unknown'
+            safety_status = "unknown"
         elif comedogenic_ingredients:
             # Has comedogenic ingredients
-            safety_status = 'unsafe'
+            safety_status = "unsafe"
         else:
             # Has ingredients, none are comedogenic
-            safety_status = 'safe'
+            safety_status = "safe"
 
         return {
             "id": product_row[0],
@@ -228,7 +246,6 @@ class ProductModel:
             "comedogenic_count": len(comedogenic_ingredients),
             "all_ingredients": all_ingredients,
         }
-
 
 
 class IngredientModel:
