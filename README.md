@@ -27,9 +27,11 @@ A full-stack web application that analyzes skincare and cosmetic products to det
 
 
 ## Screenshots
-<div><img src="https://github.com/user-attachments/assets/4bdea04b-a18c-467c-87a6-d030bcae2537" width=20% height=10%></div>
-<div><img src="https://github.com/user-attachments/assets/46d466eb-cf52-478d-8959-7dde3bc5a329" width=20%></div>
-<img src="https://github.com/user-attachments/assets/3a55ecca-f54a-4ce7-894f-008a06b7288c" width=20%>
+<div align="center">
+  <img src="https://github.com/user-attachments/assets/3a55ecca-f54a-4ce7-894f-008a06b7288c" width="30%" style="margin: 0 10px;">
+  <img src="https://github.com/user-attachments/assets/46d466eb-cf52-478d-8959-7dde3bc5a329" width="30%" style="margin: 0 10px;">
+  <img src="https://github.com/user-attachments/assets/4bdea04b-a18c-467c-87a6-d030bcae2537" width="30%" style="margin: 0 10px;"> 
+</div>
 
 
 
